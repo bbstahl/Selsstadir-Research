@@ -1,0 +1,94 @@
+---
+title: "Selsstadir Flow Rate"
+author: "Bronte Stahl"
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+#install packages
+
+```{r}
+install.packages("ggplot2")
+install.packages("readr")
+install.packages("readxl")
+install.packages("haven")
+install.packages("viridis")
+install.packages("tidyverse")  
+```
+
+#Take packages off shelf
+
+```{r}
+library(ggplot2)
+library(readr) #this package contains read_csv()
+library(readxl) #this package contains read_excel()
+library(haven) #this package contains read_sav()
+library(viridis) #this package allows color blind friendly graphs
+library(tidyverse) # includes tidyr and ggplot2
+```
+
+#Load in flow data
+
+```{r}
+flow_data <- Book2
+```
+
+#bar chart
+
+```{r}
+# Load necessary library
+library(ggplot2)
+
+# Create the bar plot
+ggplot(flow_data, aes(x = Name, y = `Flow Rate (L/min)`)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(
+    title = "Flow Rate of Streams",
+    x = "Stream Name",
+    y = "Flow Rate (L/min)"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+#Linear graph
+
+```{r}
+# Load necessary library
+library(ggplot2)
+
+# Create the line plot
+ggplot(flow_data, aes(x = Name, y = `Flow Rate (L/min)`)) +
+  geom_line(group = 1, color = "blue", size = 1) +  # Line connecting the points
+  geom_point(color = "darkblue", size = 3) +       # Optional: points on the line
+  labs(
+    title = "Flow Rate of Streams from Highest to Lowest Elevation",
+    x = "Stream Name",
+    y = "Flow Rate (L/min)"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```

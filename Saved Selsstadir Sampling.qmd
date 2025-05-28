@@ -1,0 +1,729 @@
+---
+title: "Selsstadir Data"
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+#install packages
+```{r}
+install.packages("ggplot2")
+install.packages("readr")
+install.packages("readxl")
+install.packages("haven")
+install.packages("viridis")
+install.packages("tidyverse")  
+```
+
+#Take packages off shelf
+
+```{r}
+library(ggplot2)
+library(readr) #this package contains read_csv()
+library(readxl) #this package contains read_excel()
+library(haven) #this package contains read_sav()
+library(viridis) #this package allows color blind friendly graphs
+library(tidyverse) # includes tidyr and ggplot2
+```
+
+#Move excel file into working directory 
+```{r}
+ls()  # this lists all objects in your environment
+str(Updated_R_Selsstadir_Data) #this lets me view the dataset
+```
+
+#Give the data a clean, short name to work with
+```{r}
+grain_data <- Updated_R_Selsstadir_Data
+```
+
+#reshape
+```{r}
+library(tidyverse)
+grain_long <- grain_data %>%
+  pivot_longer(
+    cols = c("Vegetation", "Boulder (>256 mm)", "Cobble (64-256 mm)", "Pebble (4-64 mm)",
+             "Granule (2-4 mm)", "Sand/Matrix (<2 mm)"),
+    names_to = "GrainSize",
+    values_to = "Percent"
+  )
+```
+
+#Check
+```{r}
+head(grain_long)
+unique(grain_long$GrainSize)
+```
+
+
+#Plot a stacked bar charts of all quadrats
+```{r}
+
+unique(grain_long$GrainSize)
+
+
+ggplot(grain_long, aes(x = Name, y = Percent, fill = GrainSize)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~ Location, scales = "free_x", nrow = 1) +
+  scale_fill_manual(values = c(
+   "Vegetation" = "#999999",
+    "Boulder (>256 mm)" = "#E69F00",
+    "Cobble (64-256 mm)" = "#56B4E9",
+    "Pebble (4-64 mm)" = "#009E73",
+    "Granule (2-4 mm)" = "#F0E442",
+    "Sand/Matrix (<2 mm)" = "#0072B2"
+  )) +
+  labs(
+    title = "Grain Size and Vegetation Composition by Quadrat",
+    x = "Quadrat",
+    y = "Percent Composition",
+    fill = "Component"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+#dot plot of slope angle by location
+```{r}
+ggplot(grain_data, aes(x = Location, y = `Slope Angle (°)`)) +
+  geom_jitter(width = 0.2, size = 3, color = "#0072B2") +  # Color-blind safe blue
+  labs(
+    title = "Slope Angle by Location",
+    x = "Location",
+    y = "Slope Angle (°)"
+  ) +
+  theme_minimal(base_size = 14)
+
+```
+#Add a trendline
+#Make Location numerical
+```{r}
+grain_data$SlopeZone <- as.numeric(factor(grain_data$Location, levels = c("Source", "Path", "Deposit")))
+```
+#Plot with linear trnedline
+```{r}
+ggplot(grain_data, aes(x = SlopeZone, y = `Slope Angle (°)`)) +
+  geom_point(size = 3, color = "#0072B2") +
+  geom_smooth(method = "lm", se = TRUE, color = "#D55E00", size = 1.2) +
+  scale_x_continuous(
+    breaks = 1:3,
+    labels = c("Source", "Path", "Deposit")
+  ) +
+  labs(
+    title = "Slope Angle Trend Across Slope Profile",
+    x = "Location",
+    y = "Slope Angle (°)"
+  ) +
+  theme_minimal(base_size = 14)
+
+```
+#Plot with nonlinear trendline
+#span=.75 to avoid overfitting
+```{r}
+ggplot(grain_data, aes(x = SlopeZone, y = `Slope Angle (°)`)) +
+  geom_point(size = 3, color = "#0072B2") +
+  geom_smooth(method = "loess", se = TRUE, span =.75,color = "#D55E00", size = 1.2) +
+  scale_x_continuous(
+    breaks = 1:3,
+    labels = c("Source", "Path", "Deposit")
+  ) +
+  labs(
+    title = "Slope Angle Trend Across Slope Profile",
+    x = "Location",
+    y = "Slope Angle (°)"
+  ) +
+  theme_minimal(base_size = 14)
+
+```
+
+#Read in Averaged Data and Rename
+```{r}
+library(readxl)
+Averaged_Selsstadir_Quadrat_Data <- read_excel("Averaged Selsstadir Quadrat Data.xlsx")
+View(Averaged_Selsstadir_Quadrat_Data)
+
+average_data <-read_excel("Averaged Selsstadir Quadrat Data.xlsx")
+```
+```{r}
+str(average_data)
+
+```
+#stacked bar chart of averages
+```{r}
+colnames(average_data)
+
+```
+
+```{r}
+library(ggplot2)
+
+average_data$Location <- factor(average_data$Location, levels = c("Source", "Path", "Deposit"))
+
+ggplot(average_data, aes(x = Location, y = Percent, fill = `Grain Size`)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c(
+   "Vegetation" = "#999999",
+    "Boulder (>256 mm)" = "#E69F00",
+    "Cobble (64-256 mm)" = "#56B4E9",
+    "Pebble (4-64 mm)" = "#009E73",
+    "Granule (2-4 mm)" = "#F0E442",
+    "Sand/Matrix (<2 mm)" = "#0072B2"
+  )) +
+  labs(
+    title = "Average Grain Size and Vegetation Composition by Location",
+    x = "Location",
+    y = "Average Percent Composition",
+    fill = "Grain Size"
+  ) +
+  theme_minimal(base_size = 14)
+
+```
+#sort by how much sand/matrix is in each quadrat
+#filter out just sand
+```{r}
+library(dplyr)
+
+location_order <- average_data %>%
+  filter(`Grain Size` == "Sand/Matrix (<2 mm)") %>%
+  arrange(desc(Percent)) %>%
+  pull(Location)
+
+average_data$Location <- factor(average_data$Location, levels = location_order)
+
+ggplot(average_data, aes(x = Location, y = Percent, fill = `Grain Size`)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c(
+   "Vegetation" = "#999999",
+    "Boulder (>256 mm)" = "#E69F00",
+    "Cobble (64-256 mm)" = "#56B4E9",
+    "Pebble (4-64 mm)" = "#009E73",
+    "Granule (2-4 mm)" = "#F0E442",
+    "Sand/Matrix (<2 mm)" = "#0072B2"
+  )) +
+  labs(
+    title = "Sorted by Sand/Matrix Content",
+    x = "Location",
+    y = "Percent Composition",
+    fill = "Grain Size"
+  ) +
+  theme_minimal(base_size = 14)
+
+```
+#normalize averages
+```{r}
+library(dplyr)
+
+normalized_avg <- average_data %>%
+  group_by(Location) %>%
+  mutate(Percent = (Percent / sum(Percent)) * 100)
+
+```
+#plot normalized averages so they add to 100%
+```{r}
+library(ggplot2)
+
+ggplot(normalized_avg, aes(x = Location, y = Percent, fill = `Grain Size`)) +
+  geom_bar(stat = "identity") +
+  geom_text(
+  aes(label = ifelse(round(Percent, 1) > 0, paste0(round(Percent, 1), "%"), "")),
+  position = position_stack(vjust = 0.5),
+  color = "white", size = 4
+)
+ +
+  scale_fill_manual(values = c(
+    "Vegetation" = "#999999",
+    "Boulder (>256 mm)" = "#E69F00",
+    "Cobble (64-256 mm)"= "#56B4E9",
+    "Pebble (4-64 mm)" = "#009E73",
+    "Granule (2-4 mm)" = "#F0E442",
+    "Sand/Matrix (<2 mm)" = "#0072B2"
+  )) +
+  labs(
+    title = "Normalized Average Composition by Location",
+    x = "Location",
+    y = "Percent of Total Composition",
+    fill = "Grain Size"
+  ) +
+  theme_minimal(base_size = 14)
+
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Ensure Grain Size is a factor with levels in your intended order
+normalized_avg$`Grain Size` <- factor(normalized_avg$`Grain Size`, levels = c(
+  "Vegetation",
+    "Boulder (>256 mm)" ,
+    "Cobble (64-256 mm)" ,
+    "Pebble (4-64 mm)" ,
+    "Granule (2-4 mm)" ,
+    "Sand/Matrix (<2 mm)" 
+))
+
+# Set Location as an ordered factor
+normalized_avg$Location <- factor(normalized_avg$Location, levels = c("Source", "Path", "Deposit"))
+
+# Plot with fixed labels and matching colors
+ggplot(normalized_avg, aes(x = Location, y = Percent, fill = `Grain Size`)) +
+  geom_bar(stat = "identity") +
+  geom_text(
+    aes(label = ifelse(round(Percent, 1) > 0, paste0(round(Percent, 1), "%"), "")),
+    position = position_stack(vjust = 0.5),
+    color = "white", size = 4
+  ) +
+  scale_fill_manual(values = c(
+    "Vegetation" = "#009E73",
+    "Boulder (>256 mm)" = "#E69F00",
+    "Cobble (64-256 mm)" = "#56B4E9",
+    "Pebble (4-64 mm)" = "#999999",
+    "Granule (2-4 mm)" = "#F0E442",
+    "Sand/Matrix (<2 mm)" = "#0072B2"
+  )) +
+  labs(
+    title = "Normalized Average Composition by Location",
+    x = "Location",
+    y = "Percent Composition",
+    fill = "Grain Size"
+  ) +
+  theme_minimal(base_size = 14)
+
+```
+
+
+#Summarize coarse and fine content
+#working column names
+# "Vegetation" 
+#   "Boulder (>256 mm)"
+#   "Cobble (64-256 mm)"
+#  "Pebble (4-64 mm)"
+# "Granule (2-4 mm)"
+#   "Sand/Matrix (<2 mm)
+```{r}
+library(dplyr)
+
+# Summarize coarse content
+coarse_data <- average_data %>%
+  filter(`Grain Size` %in% c("Boulder (>256 mm)","Cobble (64-256 mm)", "Pebble (4-64 mm)")) %>%
+  group_by(Location) %>%
+  summarise(CoarsePercent = sum(Percent))
+
+# Summarize fine content
+fine_data <- average_data %>%
+  filter(`Grain Size` %in% c("Granule (2-4 mm)", "Sand/Matrix (<2 mm)")) %>%
+  group_by(Location) %>%
+  summarise(FinePercent = sum(Percent))
+
+```
+#plot coarse material
+```{r}
+ggplot(coarse_data, aes(x = Location, y = CoarsePercent, fill = Location)) +
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Coarse-Grained Material by Location",
+    x = "Location",
+    y = "Total Coarse Content (%)",
+    fill = "Location"
+  ) +
+  theme_minimal(base_size = 14) +
+  scale_fill_brewer(palette = "Dark2")
+
+```
+#plot fine material
+```{r}
+ggplot(fine_data, aes(x = Location, y = FinePercent, fill = Location)) +
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Fine-Grained Material by Location",
+    x = "Location",
+    y = "Total Fine Content (%)",
+    fill = "Location"
+  ) +
+  theme_minimal(base_size = 14) +
+  scale_fill_brewer(palette = "Paired")
+
+```
+
+#combine the above charts
+```{r}
+library(dplyr)
+library(tidyr)
+
+# Combine coarse and fine into one dataset
+coarse_data <- average_data %>%
+  filter(`Grain Size` %in% c("Boulder (>256 mm)", "Cobble (64–256 mm)", "Pebble (4–64 mm)")) %>%
+  group_by(Location) %>%
+  summarise(Percent = sum(Percent)) %>%
+  mutate(Type = "Coarse")
+
+fine_data <- average_data %>%
+  filter(`Grain Size` %in% c("Granule (2–4 mm)", "Sand/Matrix (<2 mm)")) %>%
+  group_by(Location) %>%
+  summarise(Percent = sum(Percent)) %>%
+  mutate(Type = "Fine")
+
+# Combine into one long-format data frame
+coarse_fine_data <- bind_rows(coarse_data, fine_data)
+
+```
+#create stacked bar chart
+```{r}
+library(ggplot2)
+
+ggplot(coarse_fine_data, aes(x = Location, y = Percent, fill = Type)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = round(Percent, 1)), 
+            position = position_stack(vjust = 0.5), 
+            color = "white", size = 4.5) +
+  scale_fill_manual(values = c("Coarse" = "#E69F00", "Fine" = "#0072B2")) +
+  labs(
+    title = "Coarse vs Fine Material Composition by Location",
+    x = "Location",
+    y = "Percent Composition",
+    fill = "Material Type"
+  ) +
+  theme_minimal(base_size = 14)
+
+```
+#vegetation only summary
+```{r}
+vegetation_data <- average_data %>%
+  filter(`Grain Size` == "Vegetation") %>%
+  select(Location, Percent) %>%
+  mutate(Type = "Vegetation")
+
+```
+#combine with coarse and fine
+```{r}
+# Combine all three categories
+coarse_fine_veg_data <- bind_rows(coarse_data, fine_data, vegetation_data)
+
+```
+
+#plot all three in a stcked bar chart
+```{r}
+ggplot(coarse_fine_veg_data, aes(x = Location, y = Percent, fill = Type)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = round(Percent, 1)),
+            position = position_stack(vjust = 0.5),
+            color = "white", size = 4.5) +
+  scale_fill_manual(values = c(
+    "Coarse" = "#E69F00",     # Orange
+    "Fine" = "#0072B2",       # Blue
+    "Vegetation" = "#999999"  # Gray
+  )) +
+  labs(
+    title = "Coarse, Fine, and Vegetation Composition by Location",
+    x = "Location",
+    y = "Percent Composition",
+    fill = "Component"
+  ) +
+  theme_minimal(base_size = 14)
+
+```
+
+#normalizing percents so they always add to 100
+```{r}
+library(dplyr)
+
+# Normalize so each location sums to 100%
+normalized_data <- coarse_fine_veg_data %>%
+  group_by(Location) %>%
+  mutate(Percent = (Percent / sum(Percent)) * 100)
+
+```
+#replot with normalized values
+```{r}
+library(ggplot2)
+
+# Set Location as an ordered factor
+normalized_data$Location <- factor(normalized_data$Location, levels = c("Source", "Path", "Deposit"))
+
+ggplot(normalized_data, aes(x = Location, y = Percent, fill = Type)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0(round(Percent, 1), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "white", size = 4.5) +
+  scale_fill_manual(values = c(
+    "Coarse" = "#E69F00",
+    "Fine" = "#0072B2",
+    "Vegetation" = "#999999"
+  )) +
+  labs(
+    title = "Coarse, Fine, and Vegetation Composition by Location",
+    x = "Location",
+    y = "Percent Composition",
+    fill = "Component"
+  ) +
+  theme_minimal(base_size = 14)
+
+```
+
+```{r}
+# Load required libraries
+library(readxl)
+library(tidyverse)
+
+# Load data
+data <- read_excel("Updated R Selsstadir Data.xlsx")
+
+# Define grain size columns
+grain_cols <- c("Boulder (>256 mm)", "Cobble (64-256 mm)", "Pebble (4-64 mm)",
+                "Granule (2-4 mm)", "Sand/Matrix (<2 mm)")
+
+# Normalize the grain size columns so they sum to 100% for each row
+data[grain_cols] <- t(apply(data[grain_cols], 1, function(x) x / sum(x, na.rm = TRUE) * 100))
+
+# Convert to long format
+grain_long <- data %>%
+  pivot_longer(cols = all_of(grain_cols), 
+               names_to = "Grain_Size", 
+               values_to = "Percent")
+
+# Plot: bar graph by Location with fill by Grain_Size and color/shape by Vegetation
+ggplot(grain_long, aes(x = Name, y = Percent, fill = Grain_Size)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~Location, scales = "free_x") +
+  theme_minimal() +
+  labs(title = "Grain Size Distribution by Location",
+       y = "Percent",
+       x = "Sample Name") +
+  scale_fill_brewer(palette = "Set2") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+#Instal packages
+```{r}
+install.packages("readxl")
+install.packages("tidyverse")
+install.packages("viridis")  # for color-blind friendly palettes
+
+```
+
+#Fix dashes in col names
+```{r}
+# Rename all grain size columns to consistent format
+names(data) <- str_replace_all(names(data), "–", "-")  # convert en-dash to hyphen
+names(data) <- str_trim(names(data))                   # remove extra spaces
+
+# Re-define the grain size columns after cleaning
+grain_cols <- c("Boulder (>256 mm)", "Cobble (64-256 mm)", "Pebble (4-64 mm)",
+                "Granule (2-4 mm)", "Sand/Matrix (<2 mm)")
+
+```
+#Convert to long data
+```{r}
+# Convert to long format
+grain_long <- data %>%
+  pivot_longer(cols = all_of(grain_cols), 
+               names_to = "Grain_Size", 
+               values_to = "Percent")
+
+```
+#NOrmalize data
+```{r}
+# Normalize grain size columns so they sum to 100% per row
+data[grain_cols] <- t(apply(data[grain_cols], 1, function(x) x / sum(x, na.rm = TRUE) * 100))
+```
+
+#Define all components
+```{r}
+grain_cols <- c("Boulder (>256 mm)", "Cobble (64-256 mm)", "Pebble (4-64 mm)",
+                "Granule (2-4 mm)", "Sand/Matrix (<2 mm)")
+all_components <- c(grain_cols, "Vegetation")
+
+```
+#NOrmalize all
+```{r}
+names(data)
+```
+#Start of individual Graphs
+#Color blind friendly
+```{r}
+# custom_palette <- c(
+#   "Vegetation" = "#007F5F",        # Teal green 
+#   "Sand/Matrix (<2 mm)" = "#E9C46A",   # Yellow
+#   "Pebble (4-64 mm)" = "#6C757D",      # Grey
+#   "Granule (2-4 mm)" = "#457B9D",      # Blue
+#   "Cobble (64-256 mm)" = "#9D4EDD",    # Purple
+#   "Boulder (>256 mm)" = "#F4A261"      # Orange
+  
+  custom_palette <- c(
+  "Boulder (>256 mm)" = "#56B4E9",       # blue
+  "Cobble (64-256 mm)" = "#E69F00",      # orange
+  "Pebble (4-64 mm)" = "#999999",        # grey
+  "Granule (2-4 mm)" = "#0072B2",        # dark blue
+  "Sand/Matrix (<2 mm)" = "#F0E442",     # yellow
+  "Vegetation" = "#009E73"           # green
+)
+
+```
+
+```{r}
+library(readxl)
+library(tidyverse)
+
+# Load the data
+data <- read_excel("Updated R Selsstadir Data.xlsx", sheet = "Converted")
+
+# # Check column names and rename if needed
+# if ("Vegetation" %in% names(data)) {
+#   data <- data %>% rename(`Vegetation (%)` = Vegetation)
+# }
+
+# Define columns to include in normalization
+grain_cols <- c("Boulder (>256 mm)", "Cobble (64-256 mm)", "Pebble (4-64 mm)",
+                "Granule (2-4 mm)", "Sand/Matrix (<2 mm)")
+all_components <- c(grain_cols, "Vegetation")
+
+# Normalize all components so they sum to 100%
+data[all_components] <- t(apply(data[all_components], 1, function(x) x / sum(x, na.rm = TRUE) * 100))
+
+# Convert to long format
+grain_long <- data %>%
+  pivot_longer(cols = all_of(all_components),
+               names_to = "Grain_Size",
+               values_to = "Percent")
+
+```
+#PAth, SOurce, Deposit
+```{r}
+# grain_path <- grain_long %>% filter(Location == "Path")
+
+grain_long %>% 
+  filter(Location == "Path") %>% 
+ggplot(aes(x = Name, y = Percent, fill = Grain_Size)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = ifelse(Percent > 3, paste0(round(Percent, 1), "%"), "")),
+            position = position_stack(vjust = 0.5), size = 3) +
+  scale_fill_manual(values = custom_palette) +
+  labs(title = "Path: Grain Size & Vegetation Composition",
+       x = "Quadrat", y = "Percent Composition", fill = "Category") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+grain_long %>% 
+  filter(Location == "Source") %>% 
+ggplot(aes(x = Name, y = Percent, fill = Grain_Size)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = ifelse(Percent > 3, paste0(round(Percent, 1), "%"), "")),
+            position = position_stack(vjust = 0.5), size = 3) +
+  scale_fill_manual(values = custom_palette) +
+  labs(title = "Source: Grain Size & Vegetation Composition",
+       x = "Quadrat", y = "Percent Composition", fill = "Category") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+grain_long %>% 
+  filter(Location == "Deposit") %>% 
+ggplot(aes(x = Name, y = Percent, fill = Grain_Size)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = ifelse(Percent > 3, paste0(round(Percent, 1), "%"), "")),
+            position = position_stack(vjust = 0.5), size = 3) +
+  scale_fill_manual(values = custom_palette) +
+  labs(title = "Deposit: Grain Size & Vegetation Composition",
+       x = "Quadrat", y = "Percent Composition", fill = "Category") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+#Coarse vs Fine
+```{r}
+# Set Location as an ordered factor
+normalized_data$Location <- factor(normalized_data$Location, levels = c("Source", "Path", "Deposit"))
+
+# Plot
+ggplot(normalized_data, aes(x = Location, y = Percent, fill = Type)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0(round(Percent, 1), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "white", size = 4.5) +
+  scale_fill_manual(values = c(
+    "Coarse" = "#E69F00",       # Orange
+    "Fine" = "#0072B2",         # Blue
+    "Vegetation" = "#999999"    # Grey
+  )) +
+  labs(
+    title = "Coarse, Fine, and Vegetation Composition by Location",
+    x = "Location",
+    y = "Percent Composition",
+    fill = "Component"
+  ) +
+  theme_minimal(base_size = 14)
+
+```
+#Adding slope line to the stacked bar chart
+```{r}
+library(readxl)
+slope_data <- read_excel("Averaged Selsstadir Quadrat Data.xlsx")
+
+# Extract one slope value per location
+slope_df <- slope_data %>%
+  distinct(Location, `Slope Angle (°)`) %>%
+  mutate(Location = factor(Location, levels = c("Source", "Path", "Deposit")))
+
+```
+# Normalize slope angle to 0–100 scale
+
+```{r}
+slope_df <- slope_df %>%
+  mutate(Slope_Scaled = (`Slope Angle (°)` - min(`Slope Angle (°)`)) / 
+                        (max(`Slope Angle (°)`) - min(`Slope Angle (°)`)) * 100)
+```
+#add overlay to existing plot
+```{r}
+# Set Location order for bar plot data
+normalized_data$Location <- factor(normalized_data$Location, levels = c("Source", "Path", "Deposit"))
+
+# Plot with slope trend line
+ggplot(normalized_data, aes(x = Location, y = Percent, fill = Type)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0(round(Percent, 1), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "white", size = 4.5) +
+  # Overlay line and points for slope
+  geom_line(data = slope_df, aes(x = Location, y = Slope_Scaled, group = 1),
+            inherit.aes = FALSE, color = "black", size = 1.2, linetype = "dashed") +
+  geom_point(data = slope_df, aes(x = Location, y = Slope_Scaled),
+             inherit.aes = FALSE, color = "black", size = 3) +
+  # Annotate actual slope values
+  geom_text(data = slope_df, aes(x = Location, y = Slope_Scaled + 5,
+                                 label = paste0(round(`Slope Angle (°)`, 1), "°")),
+            inherit.aes = FALSE, size = 4, fontface = "italic") +
+  scale_fill_manual(values = c(
+    "Coarse" = "#E69F00",
+    "Fine" = "#0072B2",
+    "Vegetation" = "#999999"
+  )) +
+  labs(
+    title = "Coarse, Fine, and Vegetation Composition with Slope Trend",
+    x = "Location",
+    y = "Percent Composition",
+    fill = "Component"
+  ) +
+  theme_minimal(base_size = 14)
+
+```
+
+
