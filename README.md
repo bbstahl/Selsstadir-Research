@@ -1,2 +1,2 @@
-# Selsstadir Data
-An observational study by Bleu Stahl that characterizes springs, cracks, and analyzes soil distribution and vegetation cover at the Selsstaðir 2020 landslide in Seyðisfjörður. 
+# Selsstadir Research
+Observational study by Bleu Stahl at a 2020 landslide above Selsstaðir in Seyðisfjörður. Analyzes soil distribution and vegetation cover, and maps spring emergence points and cracks along Skógarhjallar. 
